@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34714.143
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StockTracker.API", "StockTracker.API.csproj", "{23A022A2-C61D-4EDB-966C-D0019B9781EE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{097FC0E9-7F97-4542-B9BA-1E0D39D9359E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{23A022A2-C61D-4EDB-966C-D0019B9781EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23A022A2-C61D-4EDB-966C-D0019B9781EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23A022A2-C61D-4EDB-966C-D0019B9781EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23A022A2-C61D-4EDB-966C-D0019B9781EE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{23A022A2-C61D-4EDB-966C-D0019B9781EE} = {097FC0E9-7F97-4542-B9BA-1E0D39D9359E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18FCE671-AD77-4038-B44E-85B8BD472D90}
+	EndGlobalSection
+EndGlobal
