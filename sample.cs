@@ -1,64 +1,83 @@
-static IEnumerable<List<long>> GetBatches(string filePath, int batchSize)
+using System.Data;
+using System.Data.SqlClient;
+using System.Diagnostics;
+
+class Program
 {
-    var batch = new List<long>(batchSize);
+    private const string ConnectionString = "";
 
-    foreach (var line in File.ReadLines(filePath))
+    private const int MaxConcurrency = 8;      // Safe DB concurrency
+    private static readonly SemaphoreSlim _semaphore =
+        new(MaxConcurrency, MaxConcurrency);
+
+    static async Task Main(string[] args)
     {
-        if (long.TryParse(line, out var id))
-        {
-            batch.Add(id);
+        string filePath = "user.txt";
 
-            if (batch.Count >= batchSize)
-            {
-                yield return batch;
-                batch = new List<long>(batchSize);
-            }
-        }
+        var stopwatch = Stopwatch.StartNew();
+
+        await ProcessFileAsync(filePath);
+
+        stopwatch.Stop();
+        Console.WriteLine($"Total Time: {stopwatch.Elapsed}");
     }
 
-    if (batch.Count > 0)
-        yield return batch;
-}
-
-static async Task ProcessAsync(string filePath)
-{
-    var batches = GetBatches(filePath, 10000);
-
-    var semaphore = new SemaphoreSlim(8); // MAX 8 parallel calls
-
-    var tasks = batches.Select(async batch =>
+    static async Task ProcessFileAsync(string filePath)
     {
-        await semaphore.WaitAsync();
+        var runningTasks = new List<Task>(MaxConcurrency * 2);
+
+        foreach (var line in File.ReadLines(filePath))
+        {
+            if (!long.TryParse(line.Trim(), out var userId))
+                continue;
+
+            var task = ExecuteSpAsync(userId);
+
+            runningTasks.Add(task);
+
+            // When we reach safe threshold, wait
+            if (runningTasks.Count >= MaxConcurrency * 4)
+            {
+                await Task.WhenAll(runningTasks);
+                runningTasks.Clear();
+            }
+        }
+
+        if (runningTasks.Count > 0)
+            await Task.WhenAll(runningTasks);
+    }
+
+    static async Task ExecuteSpAsync(long userId)
+    {
+        await _semaphore.WaitAsync();
+
         try
         {
-            await ExecuteBatchAsync(batch);
+            using var connection = new SqlConnection(ConnectionString);
+            using var command = new SqlCommand("dbo.usp_ProcessUser", connection);
+
+            command.CommandType = CommandType.StoredProcedure;
+
+            command.Parameters.Add("@userId", SqlDbType.BigInt).Value = userId;
+
+            await connection.OpenAsync();
+
+            var sw = Stopwatch.StartNew();
+
+            await command.ExecuteNonQueryAsync();
+
+            sw.Stop();
+
+            Console.WriteLine($"Processed {userId} in {sw.ElapsedMilliseconds} ms");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR for userId {userId} : {ex.Message}");
+            // Ideally log to Serilog file sink here
         }
         finally
         {
-            semaphore.Release();
+            _semaphore.Release();
         }
-    });
-
-    await Task.WhenAll(tasks);
-}
-
-static async Task ExecuteBatchAsync(List<long> memberIds)
-{
-    using var connection = new SqlConnection("your_connection");
-    using var command = new SqlCommand("dbo.usp_ProcessMembers", connection);
-
-    command.CommandType = CommandType.StoredProcedure;
-
-    var table = new DataTable();
-    table.Columns.Add("MemberId", typeof(long));
-
-    foreach (var id in memberIds)
-        table.Rows.Add(id);
-
-    var param = command.Parameters.AddWithValue("@MemberIds", table);
-    param.SqlDbType = SqlDbType.Structured;
-    param.TypeName = "dbo.MemberIdList";
-
-    await connection.OpenAsync();
-    await command.ExecuteNonQueryAsync();
+    }
 }
