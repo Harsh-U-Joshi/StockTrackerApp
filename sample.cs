@@ -9,6 +9,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* Move accordion arrow before the text */
+        .accordion-button::after {
+            position: absolute;
+            left: 1rem;
+            margin-left: 0;
+        }
+
+        /* Create padding on left to accommodate absolutely positioned arrow */
+        .accordion-button {
+            padding-left: 3rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -67,24 +80,43 @@
                             </div>
                             <div class="tab-pane fade" id="summary-pane" role="tabpanel" aria-labelledby="summary-tab"
                                 tabindex="0">
-                                <table class="table table-sm table-bordered mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Result Metric</th>
-                                            <th>Count</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Total Requests</td>
-                                            <td>1,024</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Failed Requests</td>
-                                            <td>3</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div class="accordion" id="summaryAccordion">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingOne">
+                                            <button class="accordion-button align-items-center w-100" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                                                aria-expanded="true" aria-controls="collapseOne">
+                                                <span class="fw-medium">Test Case: 1</span>
+                                                <div class="ms-auto d-flex align-items-center gap-2">
+                                                    <span class="text-muted small"><i class="bi bi-clock"></i>
+                                                        120ms</span>
+                                                    <span class="badge bg-success">200 OK</span>
+                                                </div>
+                                            </button>
+                                        </h2>
+                                        <div id="collapseOne" class="accordion-collapse collapse show"
+                                            aria-labelledby="headingOne" data-bs-parent="#summaryAccordion">
+                                            <div class="accordion-body">
+                                                <ul class="list-group list-group-flush">
+                                                    <li class="list-group-item">
+                                                        <div class="fw-bold">Path Parameters</div>
+                                                        <code>memberId:100293</code>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <div class="fw-bold">Query Parameters</div>
+                                                        <code>pageSize:1 | pageNumber:1000</code>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <div class="fw-bold">Body Parameters</div>
+                                                        <code>{ "memberId": "100293", "includeHistory": false }</code>
+                                                    </li>
+
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
                     </td>
