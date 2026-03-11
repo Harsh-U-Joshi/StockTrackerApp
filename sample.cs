@@ -1,83 +1,101 @@
-using System.Data;
-using System.Data.SqlClient;
-using System.Diagnostics;
+<!DOCTYPE html>
+<html lang="en">
 
-class Program
-{
-    private const string ConnectionString = "";
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
 
-    private const int MaxConcurrency = 8;      // Safe DB concurrency
-    private static readonly SemaphoreSlim _semaphore =
-        new(MaxConcurrency, MaxConcurrency);
+<body>
+    <div class="container">
+        <table class="table table-striped table-hover table-bordered border-primary border-2">
+            <thead class="thead-light">
+                <tr>
+                    <th class="d-flex justify-content-between align-items-center">
+                        <span>Member Inquiry API</span>
+                        <div>
+                            <button class="btn btn-primary btn-sm me-2">Execute</button>
+                            <button class="btn btn-secondary btn-sm">Cancel</button>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs" id="myTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="config-tab" data-bs-toggle="tab"
+                                    data-bs-target="#config-pane" type="button" role="tab" aria-controls="config-pane"
+                                    aria-selected="true">Configuration</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="summary-tab" data-bs-toggle="tab"
+                                    data-bs-target="#summary-pane" type="button" role="tab" aria-controls="summary-pane"
+                                    aria-selected="false">Summary</button>
+                            </li>
+                        </ul>
 
-    static async Task Main(string[] args)
-    {
-        string filePath = "user.txt";
+                        <!-- Tab panes -->
+                        <div class="tab-content pt-3" id="myTabContent">
+                            <div class="tab-pane fade show active" id="config-pane" role="tabpanel"
+                                aria-labelledby="config-tab" tabindex="0">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Setting</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Endpoint Method</td>
+                                            <td>GET</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Timeout</td>
+                                            <td>30 seconds</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tab-pane fade" id="summary-pane" role="tabpanel" aria-labelledby="summary-tab"
+                                tabindex="0">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Result Metric</th>
+                                            <th>Count</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Total Requests</td>
+                                            <td>1,024</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Failed Requests</td>
+                                            <td>3</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
-        var stopwatch = Stopwatch.StartNew();
 
-        await ProcessFileAsync(filePath);
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 
-        stopwatch.Stop();
-        Console.WriteLine($"Total Time: {stopwatch.Elapsed}");
-    }
-
-    static async Task ProcessFileAsync(string filePath)
-    {
-        var runningTasks = new List<Task>(MaxConcurrency * 2);
-
-        foreach (var line in File.ReadLines(filePath))
-        {
-            if (!long.TryParse(line.Trim(), out var userId))
-                continue;
-
-            var task = ExecuteSpAsync(userId);
-
-            runningTasks.Add(task);
-
-            // When we reach safe threshold, wait
-            if (runningTasks.Count >= MaxConcurrency * 4)
-            {
-                await Task.WhenAll(runningTasks);
-                runningTasks.Clear();
-            }
-        }
-
-        if (runningTasks.Count > 0)
-            await Task.WhenAll(runningTasks);
-    }
-
-    static async Task ExecuteSpAsync(long userId)
-    {
-        await _semaphore.WaitAsync();
-
-        try
-        {
-            using var connection = new SqlConnection(ConnectionString);
-            using var command = new SqlCommand("dbo.usp_ProcessUser", connection);
-
-            command.CommandType = CommandType.StoredProcedure;
-
-            command.Parameters.Add("@userId", SqlDbType.BigInt).Value = userId;
-
-            await connection.OpenAsync();
-
-            var sw = Stopwatch.StartNew();
-
-            await command.ExecuteNonQueryAsync();
-
-            sw.Stop();
-
-            Console.WriteLine($"Processed {userId} in {sw.ElapsedMilliseconds} ms");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"ERROR for userId {userId} : {ex.Message}");
-            // Ideally log to Serilog file sink here
-        }
-        finally
-        {
-            _semaphore.Release();
-        }
-    }
-}
+</html>
